@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { JWT_KEY } = require('../config/serverConfig');
-
+const bcrypt = require('bcrypt');
 const UserRepository = require('../repository/user-repository');
 
 class UserService{
@@ -12,6 +12,24 @@ class UserService{
         try {
             const user = await this.userRepository.create(data);
             return user;
+        } catch (error) {
+            console.log("Something went wrong on service layer");
+            throw error;
+        }
+    }
+
+    async signIn(email, plainPassword){
+        try {
+            const user = await this.userRepository.getByEmail(email);
+            const passwordMatch = this.checkPassword(plainPassword,user.password)
+            if(!passwordMatch){
+                console.log("password doesn't match");
+                throw {error:'Incorrect password'}
+            }
+            const newJwt = this.createToken({
+                email:user.email, id:user.id
+            })
+            return newJwt;
         } catch (error) {
             console.log("Something went wrong on service layer");
             throw error;
